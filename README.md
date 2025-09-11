@@ -1,3 +1,68 @@
+# obs tracker V2.1 update
+
+## Gamepad Tracking
+Gamepad tracking is a core extension of this tool, implemented using the Pygame library. It focuses on accurately capturing input operations from various gamepads, providing structured input data for scenarios such as game operation review, live stream interaction analysis, and player behavior research. This feature is compatible with mainstream gamepad devices, requiring no manual configuration of device protocols, and can automatically recognize and record complete operation processes.
+
+### 1. Feature Overview
+- **Device Compatibility**: Supports Xbox Series X/S controllers, PS5 controllers, Switch Pro controllers, generic USB gamepads, and other mainstream devices. Achieves cross-device adaptation through Pygame's unified interface, eliminating the need to distinguish between XInput/DirectInput protocols.
+- **Core Value**: Real-time synchronization with OBS recording progress. All input events carry timestamps to ensure precise alignment between gamepad operation data and video content, facilitating subsequent frame-by-frame analysis.
+- **Data Integrity**: Covers all types of gamepad inputs (buttons, sticks, triggers, D-pad) without missing operations, while filtering invalid jitter data to ensure log conciseness.
+
+
+### 2. Supported Event Types
+
+#### 1. Button Events
+- Capture Range: Covers the complete operation lifecycle of all physical buttons on the gamepad, including:
+  - Core action buttons: A/B/X/Y (or equivalent buttons on corresponding platforms, such as ×/○/□/△ on PS controllers);
+  - Shoulder buttons: LB (left shoulder), RB (right shoulder);
+  - Function buttons: Back, Start, Home (device wake-up button);
+  - Stick press buttons: Physical press actions of left stick (L3) and right stick (R3).
+- Recording Dimensions: Each event includes "universal button name", "raw hardware key code", and "operation state (press/release)" to ensure unique identification of each button.
+
+#### 2. Analog Stick Events
+- Capture Range: X-axis (horizontal) and Y-axis (vertical) displacement of both left and right sticks, reflecting real-time physical offset of the sticks.
+- Recording Dimensions:
+  - Stick identifier: Clearly distinguishes between "left_stick" and "right_stick";
+  - Axis direction: Indicates the axis (x/y) of displacement;
+  - Value precision: Records both "raw hardware values (-32768~32767, corresponding to physical stick travel)" and "normalized values (-1.0~1.0, facilitating cross-device proportion calculation)";
+  - Jitter filtering: Only records displacements with normalized values exceeding 0.1 in absolute value (filters minor hardware jitter to reduce redundant logs).
+
+#### 3. Trigger Events
+- Capture Range: Linear pressure input from left and right triggers (LT/left trigger, RT/right trigger), supporting detailed operation recording for pressure-sensitive devices.
+- Recording Dimensions:
+  - Trigger identifier: Clearly distinguishes between "left_trigger" and "right_trigger";
+  - Pressure value: Range 0~1023 (0 indicates full release, 1023 indicates full press), accurately reflecting pressure intensity.
+
+#### 4. D-pad Events
+- Capture Range: All directional inputs from the cross-shaped D-pad, including single directions (up/down/left/right), combined directions (up-left/down-left/up-right/down-right), and neutral state.
+- Recording Dimensions:
+  - D-pad identifier: Uniformly labeled as "dpad_0" (adapts to single D-pad devices);
+  - Direction description: Human-readable direction names (e.g., "up", "left_down", "neutral");
+  - Raw coordinates: Original X/Y axis input values (-1/0/1, corresponding to directional offsets), facilitating low-level data verification.
+
+### 3. Technical Implementation Details
+1. **Dependency Library**: Developed based on the `pygame.joystick` module of the Pygame framework, utilizing its native support for gamepads to simplify device detection and event monitoring logic.
+2. **Device Management**:
+   - Automatically scans for connected gamepads in the system and returns the number of devices in real-time;
+   - By default, tracks the "first detected active gamepad" (index 0). Multi-gamepad simultaneous recording is not currently supported to avoid data confusion.
+3. **Performance Optimization**:
+   - Fixed sampling rate: 30Hz (approximately one data collection every 33ms), balancing operation precision and system resource usage. CPU usage remains below 5% during single-device tracking;
+   - Thread isolation: Gamepad event monitoring runs in an independent thread, with no blocking conflicts with GUI rendering or OBS status monitoring, ensuring smooth interface performance.
+4. **Data Synchronization**:
+   - Timestamp reference: Uses OBS recording-synchronized internal timestamps (millisecond precision) to eliminate time differences between operations and video;
+   - Log integration: Gamepad events, mouse events, and keyboard events are uniformly written to the same JSONL log file, arranged in chronological order for convenient batch parsing.
+  
+## UI Update
+### Modern Visual Design
+- Adopts a dark theme color scheme (#1a1a1a for background, #2a2a2a for frames, #00d4ff for accent color), enhancing visual comfort and reducing eye fatigue during prolonged use.
+
+### Scroll Function Support
+- Newly added scrollable areas with mouse wheel support, solving the display issue when there is excessive content. All functional areas can be viewed completely even in small windows.
+
+### Partition Layout Optimization
+- Functions are divided into four independent areas - "OBS Connection", "Recording Status", "Settings", and "Manual Control", resulting in clearer logic.
+
+***
 # OBS Companion Tracker V2 LATEST
 
 ## 核心原理
