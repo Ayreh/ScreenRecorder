@@ -83,13 +83,13 @@ To clarify the collection standards and delivery process for game screen recordi
 - **Version Requirement**: ≥27.0.0 (64-bit), recommended stable version 29.1.3 (verified by compatibility testing).  
 
 #### 3.1.2 Core Configuration Requirements  
-| Configuration Category       | Specific Requirements                                                                                                                             | Configuration Path                                  |  
-|------------------------------|-----------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------|  
-| WebSocket Settings           | - Enable WebSocket service: Check “Enable WebSocket server”<br>- Port: Default 4455 (if modified, must match self-developed program configuration)<br>- Authentication: Recommended to set password (≥8 characters, including numbers + letters), and synchronize in self-developed program               | OBS → Tools → WebSocket Server Settings             |  
+| Configuration Category       | Specific Requirements                                                                                                                                                                                                                                                                                                          | Configuration Path                                  |  
+|------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------|  
+| WebSocket Settings           | - Enable WebSocket service: Check “Enable WebSocket server”<br>- Port: Default 4455 (if modified, must match self-developed program configuration)<br>- Authentication: Recommended to set password (≥8 characters, including numbers + letters), and synchronize in self-developed program                                    | OBS → Tools → WebSocket Server Settings             |  
 | Recording Source Settings    | - Prioritize “Game Capture” source: Select “Mode → Capture specific window”, specify target game process (e.g., “GenshinImpact.exe”)<br>- Alternative: “Window Capture” (for non-fullscreen games) or “Display Capture” (not recommended, prone to redundant content)<br>- Disable “Preview Window”: Reduce GPU resource usage | OBS → Scene Collection → Add Source → Game Capture  |  
-| Encoding Settings            | - Video Encoder: Select “Hardware Encoding” (e.g., NVIDIA NVENC H.264)<br>- Bitrate Control: CBR (Constant Bitrate)<br>- Bitrate: 1920×1080@60fps set to 15-20Mbps; 2560×1440@60fps set to 25-30Mbps        | OBS → File → Settings → Output → Recording          |  
-| Output Settings              | - Format: MP4 (compatible with mainstream players, supports repair after interruption)<br>- Filename Format: `[YYYY-MM-DD]_[HH-MM-SS]` (e.g., “Genshin_20240925_143000”)                                           | OBS → File → Settings → Output → Recording          |  
-| Performance Optimization     | - Disable “Vertical Sync”: Avoid screen delay<br>- Enable “Multi-threaded Encoding”: Improve encoding efficiency<br>- Frame Rate: Consistent with actual game frame rate (default 60fps)                                                               | OBS → File → Settings → Video / Output              |  
+| Encoding Settings            | - Video Encoder: Select “Hardware Encoding” (e.g., NVIDIA NVENC H.264)<br>- Bitrate Control: CBR (Constant Bitrate)<br>- Bitrate: 1920×1080@60fps set to 15-20Mbps; 2560×1440@60fps set to 25-30Mbps                                                                                                                           | OBS → File → Settings → Output → Recording          |  
+| Output Settings              | - Format: MP4 (compatible with mainstream players, supports repair after interruption)<br>- Filename Format: `[YYYY-MM-DD] [HH-MM-SS]` (e.g., “2024-09-25 14-30-00”)                                                                                                                                                           | OBS → File → Settings → Output → Recording          |  
+| Performance Optimization     | - Disable “Vertical Sync”: Avoid screen delay<br>- Enable “Multi-threaded Encoding”: Improve encoding efficiency<br>- Frame Rate: Consistent with actual game frame rate (default 60fps)                                                                                                                                       | OBS → File → Settings → Video / Output              |  
 
 
 ### 3.2 Input Collection Software  
@@ -148,8 +148,7 @@ To clarify the collection standards and delivery process for game screen recordi
 - **Naming Rules**: `[YYYY-MM-DD] [HH-MM-SS].mp4`  
 - **Example**:  
   - Recording started on September 25, 2024 at 14:30: `2024-09-25 14-30-00.mp4`
-- **Constraints**:  
-  - Game name uses official standard name (e.g., “Cyberpunk 2077” instead of “Cyberpunk”);  
+- **Constraints**:
   - Date and time accurate to seconds, consistent with OBS internal recording start time;
 
 
@@ -257,42 +256,90 @@ Only retain **“Supplier Code → Game Name”** two core directory levels, no 
   2. Game Name: Strictly use official standard name;  
   3. File Storage: Video and JSONL files directly stored in “Supplier Code-Game Name” directory, no need for further “Video/InputData” subfolders, simplifying operations.  
 
-## 6. Data Upload Specifications (Web End Exclusive Process)  
-### 6.1 Upload Method (Unified Web End Operation)  
-#### 6.1.1 Upload Tool and Process  
-- **Tool**: Upload only through the self-developed upload web end provided by us (address: [Exclusive URL allocated by us]), prohibit using AWS console, S3 CLI, or other tools;  
-- **Operation Process**:  
-  1. Access the upload web end → Enter the “Supplier Code” allocated by us (e.g., SUP001) → Select “Game Name” (dropdown selection, consistent with “Game Name” in 5.2 directory, avoid manual input errors) → Obtain upload code;  
-  2. Click “Select Files” → Upload the corresponding batch of **video files (.mp4)** and **keyboard/mouse/controller data files (.jsonl)** simultaneously (support multi-file batch selection, ensure video and JSONL file names correspond one-to-one);  
-  3. Click “Start Upload” → Wait for the web end to automatically complete the upload (no need to manually create directories, the web end will automatically match the S3 directory in 5.2 based on “Supplier Code + Game Name”).  
+## 6. Data Upload Specifications (Based on R2bucketuploader Desktop Version) (In Progress)
 
-#### 6.1.2 Protocol and Resume Upload Requirements  
-- **Transmission Protocol**: Force use of HTTPS encrypted transmission to prevent data tampering or leakage during transmission;  
-- **Resume Upload**:  
-  - The web end supports resume upload by default. When the network is interrupted (e.g., disconnection, browser closure), revisit the web end, enter the same “Supplier Code + Game Name + Upload Code” to continue uploading unfinished files without re-uploading complete files;  
-  - Supported File Size: Single file maximum support 100GB.  
+### 6.1 Upload Tool Description (Desktop EXE Application)
 
-### 6.2 Validation Mechanism (Ensure Data Integrity)  
-#### 6.2.1 MD5 Automatic Validation  
-- **Validation Process**:  
-  1. When uploading files on the web end, automatically calculate the MD5 value of local files (no need for supplier to calculate manually);  
-  2. After the file is uploaded to S3, the cloud will automatically recalculate the file MD5 value and compare it with the local MD5 value;  
-  3. If consistent → Web end displays “Upload Successful”; if inconsistent → Displays “Validation Failed”, need to re-upload the file;  
-- **Validation Result View**: After upload success, the web end can click “View Validation Report” to download a report containing “File Name, Local MD5, Cloud MD5, Validation Status” for archiving.  
+#### 6.1.1 Tool Features and Distribution Method
+* **Tool Form**: A desktop application (EXE format) packaged based on the core logic of r2-bucket-uploader, supporting Windows/macOS systems, with built-in Uppy upload engine and chunked upload capabilities, without relying on a browser.
+* **Distribution and Updates**: Provided by our side as an encrypted compressed package (including checksum), suppliers download via a specified link and can use it immediately after decompression (portable version, no installation required).
+* **Core Advantages**:
+  * More stable for large file uploads (not limited by browser memory, supports chunked transmission for files over 100GB+);
+  * Supports local file drag-and-drop (directly drag from folders into the application window);
+  * Automatic retry after network disconnection (no manual intervention required, continues uploading after network recovery).
 
-#### 6.2.2 Upload Log Recording Requirements  
-- **Log Content**: The web end will automatically record key information for each upload, no need for supplier to record manually, log includes:  
-  - Basic Information: Upload time (accurate to seconds, format YYYY-MM-DD HH:MM:SS), supplier code, game name;  
-  - File Information: Uploaded file name, file size, local MD5, cloud MD5, validation status (success/failure), upload time consumption;  
-  - Operator Information: Web end login account (bound to supplier code, ensure traceability);  
-- **Log Storage and View**:  
-  - Logs automatically stored in the “Log Directory” of the S3 main bucket (path: `game-recording-main-apse2/UploadLogs/[Supplier Code]/[Date YYYYMMDD].log`);  
-  - Suppliers can use the “Log Query” function on the upload web end, enter “Supplier Code + Date” to view the upload logs of this supplier, retain for at least 6 months.  
+#### 6.1.2 Preliminary Preparation (Obtaining Upload Code)
+Consistent with the web version, obtain the upload code through the Feishu multi-dimensional table:
+1. Access our shared Feishu multi-dimensional table (link: [Our Provided Table Address]).
+2. Fill in the form fields:
+   * Supplier code (e.g., SUP001, must match the value assigned by our side);
+   * Game name (dropdown selection, consistent with the "Game Name" in section 5.2 directory; new games can be manually entered);
+   * Username (select your own Feishu address book account for tracking upload duration and settlement).
+3. After submission, the table automatically generates an 8-16 digit upload code (alphanumeric), displays the validity period (default 72 hours) and status, and copies the code for later use.
 
-### 6.3 Upload Constraints  
-1. File names must comply with the naming specifications of 4.1.2 (video) and 4.2.1 (JSONL), otherwise the web end will prompt “File Name Format Error”, unable to upload;  
-2. Under the same “Supplier Code-Game Name” directory, prohibit uploading files with duplicate file names (if duplicate, the web end will prompt “File Already Exists”, need to confirm if it is overwrite upload, contact us for approval before overwriting);  
-3. After upload completion, need to confirm “Upload Success + Validation Passed” on the web end before closing the web; if “Validation Failed” or “Upload Timeout” is displayed, need to troubleshoot the network and re-upload until success.
+### 6.2 Core Operation Process (Desktop Application)
+
+#### 6.2.1 Application Startup and Configuration
+1. Decompress the downloaded application package and double-click R2Uploader.exe to start (first startup will generate a local configuration folder for storing logs and cache).
+2. Initial use requires completing basic configuration (only once):
+   * Language selection (default Chinese);
+   * Local cache path setting (recommended to select a non-system drive for temporary storage of chunked files, space required ≥ planned maximum upload file size).
+
+#### 6.2.2 Upload Operation Steps
+1. Input verification information: In the "Upload Configuration" area of the application main interface, fill in:
+   * Supplier code (e.g., SUP001);
+   * Game name (dropdown selection, must match the entry in the Feishu table);
+   * Upload code (paste the code obtained from the Feishu table); Click "Verify Code", the application will validate the code's validity via built-in API (not expired, unused, matches supplier/game name), unlocking the file selection area upon success.
+2. File Selection and Validation:
+   * **Method 1**: Click the "Add Files" button to batch select corresponding batch .mp4 videos and .jsonl data files;
+   * **Method 2**: Directly drag files from local folders to the application's "File List Area";
+   * The application will automatically validate file name formats (files not compliant with 4.1.2/4.2.1 specifications will be marked red, with error reasons shown on hover, prohibiting upload).
+3. Start Upload and Monitoring:
+   * Click "Start Upload", the application automatically executes:
+     * Chunking large files (files ≥100MB are automatically split into 50MB chunks for enhanced stability);
+     * Generating R2 storage path: game-recording-main-apse2/[Supplier Code]/[Game Name]/[File Name];
+     * Real-time display of overall progress (percentage), current uploading file, chunk progress, and remaining time;
+   * During upload, the application can be minimized (continues transmission in the background), but cannot be closed (closing interrupts the upload; next startup requires re-verifying the code to resume).
+4. Completion and Confirmation:
+   * After all files are successfully uploaded and validated, the application displays an "Upload Complete" popup, including the number of files uploaded this time, total size, and duration;
+   * Click "View Report" to generate a local validation report (txt format, containing file names, MD5 comparison results, upload code), recommended to save for records;
+   * The corresponding upload code status in the Feishu table will automatically update to "Used", and sync the upload results.
+
+### 6.3 Resumable Upload and Exception Handling
+
+#### 6.3.1 Resumable Upload Mechanism
+* Supports resumption in two scenarios:
+  1. **Network Interruption**: The application automatically detects network status and resumes from the interrupted chunk without intervention after recovery;
+  2. **Application Closure**: Restart the application, input the same supplier code + game name + upload code, the application reads the local cache's "Incomplete File Records" to automatically identify and continue uploading the required files.
+
+#### 6.3.2 Exception Handling
+* **File Validation Failure**: The application marks the failed file and displays a "Retry" button; clicking retries only that file (no need to re-upload all);
+* **Upload Code Expiration**: If the code expires during upload (e.g., exceeding 24 hours), the application prompts "Code Expired", requiring a new code from the Feishu table; inputting it allows continuation (already uploaded chunks do not need retransmission);
+* **Insufficient Disk Space**: When cache path space is insufficient, the application prompts "Clear Cache" or "Change Cache Path"; clearing does not affect uploaded chunks (already stored in the cloud).
+
+### 6.4 Logs and Data Integration
+
+#### 6.4.1 Local Logs and Cloud Synchronization
+* **Local Logs**: The application automatically generates log files in the configuration folder (path: [Cache Path]/logs/[YYYYMMDD].log), recording:
+  * Operation time, upload code, supplier code, game name;
+  * Upload progress for each file, chunk success/failure records, MD5 values, duration;
+* **Cloud Logs**: After upload completion, the application synchronizes core logs (via encrypted interface) to the R2 log directory: game-recording-main-apse2/UploadLogs/[Supplier Code]/[YYYYMMDD].log, consistent with web version log format.
+
+#### 6.4.2 Integration with Feishu Table
+* The desktop application integrates with the Feishu table via built-in API to achieve:
+  * **Pre-Upload**: Pulls table data for comparison during code verification;
+  * **During Upload**: Syncs "Current Upload Progress" to the table every 90 seconds (optional);
+  * **Post-Upload**: Updates table status to "Used", supplementing "Total File Size, Validation Report Local Path, Upload Completion Time";
+* For settlement, the table can directly aggregate upload data by "Username" (no reliance on application local files).
+
+### 6.5 Security and Constraints
+1. **Application Security**:
+   * The EXE package provided by our side includes a SHA256 checksum; suppliers must verify the checksum before use (to prevent tampering);
+   * The application communicates only via HTTPS with the backend; all sensitive information (e.g., upload code) is encrypted during transmission;
+2. **Usage Constraints**:
+   * Prohibited from modifying any files in the application directory (e.g., config.json, core.dll), otherwise leading to upload failure or marking as "Abnormal Operation";
+   * The same upload code supports use on only one device (to prevent conflicts from multi-device simultaneous uploads);
+   * For multi-device uploads, generate separate upload codes for each device (via multiple submissions in the Feishu table).
 
 ## 7. Verification and Acceptance Standards
 
@@ -312,12 +359,11 @@ Acceptance must cover “Data Compliance, Integrity, Synchronization”, first c
 #### 7.1.2 Format Compliance Validation
 Must fully comply with 4.1 “Video Delivery Standards”, validation items as follows:
 
-| Validation Item | Qualified Standards | Verification Tools/Methods |
-|--------|----------|---------------|
-| Encoding Format | Video Encoding: H.264 (High Profile); Audio Encoding: AAC (LC Profile) | Use FFmpeg: `ffmpeg -i video_file.mp4`, check “Codec” fields (e.g., “Video: h264” “Audio: aac”) |
-| File Splitting | Single segment video file size ≤ 2GB (error allowance ±50MB), segment sequence continuous (e.g., 01→02→03, no missing) | 1. Check file size in Windows Explorer; <br>2. Sort by file name (e.g., “Genshin_20240925_143000_01.mp4”), confirm no skipped numbers |
-| Naming Specifications | Strictly conform to format: `[YYYYMMDD]_[HHMMSS].mp4`, no typos, no special characters | Manually verify file names against 4.1.2 naming rules, focus on checking if “Game Name” matches S3 directory “Game Name” and if date/time is accurate |
-| MD5 Consistency | Video file’s local MD5 and S3 cloud MD5 must be identical (refer to 6.2.1 validation report) | On the upload web end, check “View Validation Report” to confirm “Validation Status” is “Success”; or compare file “Metadata” MD5 value in S3 console with local |
+| Validation Item | Qualified Standards                                                                                                    | Verification Tools/Methods |
+|--------|------------------------------------------------------------------------------------------------------------------------|---------------|
+| Encoding Format | Video Encoding: H.264 (High Profile); Audio Encoding: AAC (LC Profile)                                                 | Use FFmpeg: `ffmpeg -i video_file.mp4`, check “Codec” fields (e.g., “Video: h264” “Audio: aac”) |
+| Naming Specifications | Strictly conform to format: `[YYYY-MM-DD] [HH-MM-SS].mp4`, no typos, no special characters                             | Manually verify file names against 4.1.2 naming rules, focus on checking if “Game Name” matches S3 directory “Game Name” and if date/time is accurate |
+| MD5 Consistency | Video file’s local MD5 and S3 cloud MD5 must be identical (refer to 6.2.1 validation report)                           | On the upload web end, check “View Validation Report” to confirm “Validation Status” is “Success”; or compare file “Metadata” MD5 value in S3 console with local |
 
 ### 7.2 Keyboard/Mouse/Controller Operation Data Acceptance Indicators
 
