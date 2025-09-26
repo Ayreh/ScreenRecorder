@@ -1,4 +1,4 @@
-# Video Collection Delivery Standards
+# Video Collection Delivery Standards 20250926
 
 ## 1. Introduction
 To clarify the collection standards and delivery process for game screen recording, this MD document is introduced.
